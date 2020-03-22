@@ -1,0 +1,1 @@
+'This file includes functions for analytical processing of data'
