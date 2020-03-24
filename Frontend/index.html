@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+	<meta charset="utf-8">
+	<title>Just to be on the safe side</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<script  type="text/javascript" src="maps.js"></script>
+	<div id = "input-panel">
+		<b>Start: </b>
+		<input list="origin_list" id="origin" onkeyup="searchCities(true)" onfocus="removeOldData(true)" placeholder="Search for origin city.." maxlength="50" autocomplete="off" spellcheck="off">
+		<datalist id="origin_list">
+		</datalist>
+		<b>End: </b>
+		<input list="dest_list" id="destination" onkeyup="searchCities(false)" onfocus="removeOldData(false)" placeholder="Search for destination city.." maxlength="50" autocomplete="off" spellcheck="off">
+		<datalist id="dest_list">
+		</datalist>
+		<input type="submit" value="Find" id = "button" onclick="initMap()">
+		<div id = 'errorDiv'>City not found in the database</div>
+	</div>
+	<div id="list-menu"></div>
+	<div id="map"></div>
+
+	<script>
+		function initMap() {
+			var directionsService = new google.maps.DirectionsService();
+			var directionsRenderer = new google.maps.DirectionsRenderer();
+			var map = new google.maps.Map(document.getElementById('map'), {
+				zoom: 4,
+				center: {lat: 41.85, lng: -87.65}
+			});
+			directionsRenderer.setMap(map);
+			findAndDisplayRoute(directionsService, directionsRenderer);
+		}
+	</script>
+   <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUQ_FqQ7ohfOQ649xBfHxxV9fLcvVmtYg&callback=initMap">
+</script>
+</body>
+</html>
