@@ -3,9 +3,6 @@ This repo is for the DVA project that was competed as a part of MS course
 
 # Required libraries
 -fastapi
--asyncio
--darksky_async
--darksky.types
 -uvicorn
 
 # Steps to run:
