@@ -3,7 +3,7 @@ from starlette.requests import Request
 from .ml.model import Inference
 from sqlalchemy import create_engine
 from fastapi.middleware.cors import CORSMiddleware
-from Util.util import get_address_info
+from .Util.util import get_address_info
 import json
 
 app = FastAPI()
