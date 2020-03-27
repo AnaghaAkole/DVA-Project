@@ -1,5 +1,8 @@
 'This file includes helper functions that are useful for ML model'
 import requests, json, datetime
+from geopy.geocoders import Nominatim
+import time
+
 def get_weather_info(lattitude, longitude, time):
     filtered_data = dict()
     r = requests.get(
@@ -42,3 +45,26 @@ def predict_input_format_wrapper(attrs_dict):
                     float(attrs_dict['Traffic_Calming']),
                     float(attrs_dict['Traffic_Signal'])]
     return feature_list
+
+def get_address_info(data):
+    geolocator = Nominatim(user_agent='DVA-project')
+    route_obj = data[0]['route']
+    for obj in data:
+        route = obj['route']
+        duration = obj['duration']
+        obj['start_time'] = time.time()
+        obj['end_time'] = obj['start_time'] + duration
+        for r in route:
+            location = geolocator.reverse(', '.join([str(r['latitude']), str(r['longitude'])]), timeout=600000)
+            if 'address' in location.raw:
+                r['county'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county']
+                r['postcode'] = '' if 'postcode' not in location.raw['address'] else location.raw['address']['postcode']
+                r['street'] = '' if 'road' not in location.raw['address'] else location.raw['address']['road']
+                r['city'] = '' if 'city' not in location.raw['address'] else location.raw['address']['city']
+                r['state'] = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
+    result = {
+        'start_lat': route_obj[0]['latitude'],
+        'start_long': route_obj[0]['longitude'],
+        'data': data
+    }
+    return result

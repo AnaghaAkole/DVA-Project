@@ -3,6 +3,8 @@ from starlette.requests import Request
 from .ml.model import Inference
 from sqlalchemy import create_engine
 from fastapi.middleware.cors import CORSMiddleware
+from Util.util import get_address_info
+import json
 
 app = FastAPI()
 inference_obj = Inference()
@@ -34,9 +36,12 @@ def show_map():
 
 
 @app.post("/maps/safepath")
-def get_safest_route(request: Request):
-    print (request.body())
-    pass
+async def get_safest_route(request: Request):
+    params = await request.body()
+    data = json.loads(params.decode(encoding='UTF-8'))
+    address_data = get_address_info(data)
+    print(address_data)
+
 
 
 @app.get("/cities")
