@@ -35,7 +35,8 @@ def show_map():
 
 @app.post("/maps/safepath")
 def get_safest_route(request: Request):
-    print (request.body())
+    request_body = request.body()
+    inference_obj.find_safest_path(request_body)
     pass
 
 

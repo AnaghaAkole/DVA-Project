@@ -1,5 +1,7 @@
 'This file includes helper functions that are useful for ML model'
 import requests, json, datetime
+
+
 def get_weather_info(lattitude, longitude, time):
     filtered_data = dict()
     r = requests.get(
@@ -21,6 +23,7 @@ def get_weather_info(lattitude, longitude, time):
     print(filtered_data)
     return filtered_data
 
+
 def predict_input_format_wrapper(attrs_dict):
     """
         This method parses attributes from dict to a list,
@@ -28,8 +31,8 @@ def predict_input_format_wrapper(attrs_dict):
         Argument  : dict of input attributes with same naming as in the dataset
         Return    : list of attributes to be passed to model.predict method
     """
-    
-    feature_list = [attrs_dict['Start_Lng'], 
+
+    feature_list = [attrs_dict['Start_Lng'],
                     attrs_dict['Start_Lat'],
                     attrs_dict['Temperature(F)'],
                     attrs_dict['Humidity(%)'],
