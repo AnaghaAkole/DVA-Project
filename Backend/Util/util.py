@@ -70,3 +70,41 @@ def get_address_info(data):
         'data': data
     }
     return result
+
+
+def form_query(feature, bbox):
+    overpass_query = """
+    [out:json][timeout:50000];
+    node
+    """+feature + bbox+"""; 
+    out body;
+    """
+    return overpass_query
+
+
+def get_topology_info(feature,bbox):
+    overpass_url = "http://overpass-api.de/api/interpreter"
+    overpass_query = ""
+    # use bbox coordinates in query . Currently giving dummy coordinates
+    bbox = "(50.6,7.0,50.8,7.3)"
+    if feature == 'traffic_calming':
+        overpass_query = form_query("""["traffic_calming"="yes"]""", bbox)
+    elif feature == 'crossing':
+        overpass_query = form_query("""["highway"="crossing"]""", bbox)
+    elif feature == 'give_way':
+        overpass_query = form_query("""["highway"="give_way"]""",bbox)
+    elif feature == 'station':
+        # bus stop or railway station
+        overpass_query = form_query("""["public_transport"="station"]""", bbox)
+    elif feature == 'railway':
+        overpass_query = form_query("""["railway"="level_crossing"]""", bbox)
+    elif feature == 'traffic_signals':
+        overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
+
+    response = requests.get(overpass_url,
+                            params={'data': overpass_query})
+    data = response.json()
+    if data and 'elements' in data and len(data['elements']) > 0:
+        return True
+    else:
+        return False
