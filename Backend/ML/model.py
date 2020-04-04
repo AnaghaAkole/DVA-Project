@@ -1,7 +1,7 @@
 'This file includes Machine Learning model for predicting accidents'
 from sklearn.externals import joblib
 from datetime import datetime
-from Backend.Util.util import get_weather_info, predict_input_format_wrapper
+from Backend.Util.util import get_weather_info, predict_input_format_wrapper,merge,get_address_info
 
 
 class Model:
@@ -28,6 +28,8 @@ class Inference:
 
     def find_safest_path(self, routes):
         current_date_time = self.get_current_timestamp()
+        data = get_address_info(routes)
+        routes = data['data']
         for route in routes:
             route = route["route"]
             severity = 0
@@ -36,9 +38,9 @@ class Inference:
                 latitude = stops["latitude"]
                 longitude = stops["longitude"]
                 weather_data = get_weather_info(latitude, longitude, current_date_time)
-                # call google maps API
+                stops = merge(weather_data, stops)
                 # call open street maps API
-                model_features = predict_input_format_wrapper(weather_data)
+                model_features = predict_input_format_wrapper(stops)
                 severity += self.model.predict(model_features)
                 count += 1
             route["severity"] = severity / count

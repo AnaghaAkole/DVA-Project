@@ -48,6 +48,7 @@ def predict_input_format_wrapper(attrs_dict):
                     float(attrs_dict['Traffic_Signal'])]
     return feature_list
 
+
 def get_address_info(data):
     geolocator = Nominatim(user_agent='DVA-project')
     route_obj = data[0]['route']
@@ -76,13 +77,13 @@ def form_query(feature, bbox):
     overpass_query = """
     [out:json][timeout:50000];
     node
-    """+feature + bbox+"""; 
+    """ + feature + bbox + """; 
     out body;
     """
     return overpass_query
 
 
-def get_topology_info(feature,bbox):
+def get_topology_info(feature, bbox):
     overpass_url = "http://overpass-api.de/api/interpreter"
     overpass_query = ""
     # use bbox coordinates in query . Currently giving dummy coordinates
@@ -92,7 +93,7 @@ def get_topology_info(feature,bbox):
     elif feature == 'crossing':
         overpass_query = form_query("""["highway"="crossing"]""", bbox)
     elif feature == 'give_way':
-        overpass_query = form_query("""["highway"="give_way"]""",bbox)
+        overpass_query = form_query("""["highway"="give_way"]""", bbox)
     elif feature == 'station':
         # bus stop or railway station
         overpass_query = form_query("""["public_transport"="station"]""", bbox)
@@ -108,3 +109,7 @@ def get_topology_info(feature,bbox):
         return True
     else:
         return False
+
+
+def merge(dict1, dict2):
+    return dict2.update(dict1)
