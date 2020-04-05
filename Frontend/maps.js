@@ -63,7 +63,8 @@ function removeOldData(isStart) {
 function findAndDisplayRoute(directionsService, directionsRenderer) {
 	var origin = document.getElementById('origin').value;
 	var destination = document.getElementById('destination').value;
-	if (origin == "" || destination == "") {
+	var timeOfTravel = $("#datetimepicker1").find("input").val();
+	if (origin == "" || destination == "" || timeOfTravel == "") {
 	}
 	else {
 		// call google map api to get routes
@@ -103,8 +104,12 @@ function findAndDisplayRoute(directionsService, directionsRenderer) {
 					}
 
 				}
-				console.log(requestBody)
-				getSafestRoute(requestBody);
+				finalRequestBody = {
+					"timeOfTravel":timeOfTravel,
+					"routes": requestBody
+				}
+				console.log(finalRequestBody);
+				getSafestRoute(finalRequestBody);
               	// modify the response here to remove unsafe routes from routes[] array to render only safest route on the UI
               	directionsRenderer.setDirections(response);
               } else {
