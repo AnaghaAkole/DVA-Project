@@ -11,11 +11,11 @@ This repo is for the DVA project that was competed as a part of MS course
 run following command to launch:
 #uvicorn main:app --reload
 
-# Zipped Pickle File for ML Model
-https://drive.google.com/file/d/1Ct_Gj4nZ_fVy70hGxp_BYr8s34eOwfvo/view?usp=sharing
-
-Visit following URL:
+# Visit following URL:
 http://127.0.0.1:8000/items/4?q=somequery
+
+# Zipped Pickle File for ML Model
+https://drive.google.com/file/d/1f7LUilLWEI-8E8wTSv5AYUcKr55Vny7J/view?usp=sharing
 
 # Sqlite db file
 https://drive.google.com/open?id=1rmV3UbXcqnyv3CBIltTVmZ_FIlrGjGQ-
