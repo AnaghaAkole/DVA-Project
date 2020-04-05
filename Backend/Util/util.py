@@ -97,25 +97,32 @@ def get_topology_info(latitude, longitude):
     :param longitude:
     :return:dict: {"traffic_calming":True ......}
     """
-    overpass_url = "http://overpass-api.de/api/interpreter"
-    overpass_query = ""
-    feature = None
     # use bbox coordinates in query . Currently giving dummy coordinates
     bbox = "(50.6,7.0,50.8,7.3)"
-    if feature == 'traffic_calming':
-        overpass_query = form_query("""["traffic_calming"="yes"]""", bbox)
-    elif feature == 'crossing':
-        overpass_query = form_query("""["highway"="crossing"]""", bbox)
-    elif feature == 'give_way':
-        overpass_query = form_query("""["highway"="give_way"]""", bbox)
-    elif feature == 'station':
-        # bus stop or railway station
-        overpass_query = form_query("""["public_transport"="station"]""", bbox)
-    elif feature == 'railway':
-        overpass_query = form_query("""["railway"="level_crossing"]""", bbox)
-    elif feature == 'traffic_signals':
-        overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
+    result = {}
+    overpass_query = form_query("""["traffic_calming"="yes"]""", bbox)
+    result['traffic_calming'] = is_present(overpass_query)
 
+    overpass_query = form_query("""["highway"="crossing"]""", bbox)
+    result['crossing'] = is_present(overpass_query)
+
+    overpass_query = form_query("""["highway"="give_way"]""", bbox)
+    result['give_way'] = is_present(overpass_query)
+
+    overpass_query = form_query("""["public_transport"="station"]""", bbox)
+    result['station'] = is_present(overpass_query)
+
+    overpass_query = form_query("""["railway"="level_crossing"]""", bbox)
+    result['railway'] = is_present(overpass_query)
+
+    overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
+    result['traffic_signals'] = is_present(overpass_query)
+
+    return result
+
+
+def is_present(overpass_query):
+    overpass_url = "http://overpass-api.de/api/interpreter"
     response = requests.get(overpass_url,
                             params={'data': overpass_query})
     data = response.json()
