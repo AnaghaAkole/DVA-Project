@@ -98,7 +98,8 @@ def get_topology_info(latitude, longitude):
     :return:dict: {"traffic_calming":True ......}
     """
     # use bbox coordinates in query . Currently giving dummy coordinates
-    bbox = "(50.6,7.0,50.8,7.3)"
+    # bbox = "(50.6,7.0,50.8,7.3)"
+    bbox = "("+str(latitude-0.5)+","+str(longitude-0.5)+","+str(latitude+0.5)+","+str(longitude+0.5)+")"
     result = {}
     overpass_query = form_query("""["traffic_calming"="yes"]""", bbox)
     result['traffic_calming'] = is_present(overpass_query)
@@ -118,6 +119,7 @@ def get_topology_info(latitude, longitude):
     overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
     result['traffic_signals'] = is_present(overpass_query)
 
+    print(result)
     return result
 
 
