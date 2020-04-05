@@ -1,6 +1,7 @@
 'This file includes helper functions that are useful for ML model'
 import requests, json, datetime
 from geopy.geocoders import Nominatim
+import json
 import time
 
 
@@ -31,28 +32,6 @@ def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
     print(filtered_data)
     return filtered_data
 
-
-def predict_input_format_wrapper(attrs_dict):
-    """
-        This method parses attributes from dict to a list,
-        returned list can be use to predict Severity for an instance
-        Argument  : dict of input attributes with same naming as in the dataset
-        Return    : list of attributes to be passed to model.predict method
-    """
-
-    feature_list = [attrs_dict['Start_Lng'],
-                    attrs_dict['Start_Lat'],
-                    attrs_dict['Temperature(F)'],
-                    attrs_dict['Humidity(%)'],
-                    attrs_dict['Pressure(in)'],
-                    attrs_dict['Visibility(mi)'],
-                    float(attrs_dict['Crossing']),
-                    float(attrs_dict['Give_way']),
-                    float(attrs_dict['Railway']),
-                    float(attrs_dict['Station']),
-                    float(attrs_dict['Traffic_Calming']),
-                    float(attrs_dict['Traffic_Signal'])]
-    return feature_list
 
 
 def get_address_info(data):
@@ -136,3 +115,42 @@ def is_present(overpass_query):
 
 def merge(dict1, dict2):
     return dict2.update(dict1)
+
+
+def lookup_val_in_json(json_file, key):
+    if json_file == "wind_dir_map.json":
+        key = key.upper()
+    with open(json_file) as f: 
+        loaded_json = json.load(f)
+    return loaded_json[key]
+
+def predict_input_format_wrapper(attrs_dict):
+    """
+        This method parses attributes from dict to a list,
+        returned list can be use to predict Severity for an instance
+        Argument  : dict of input attributes with same naming as in the dataset
+        Return    : list of attributes to be passed to model.predict method
+    """
+    feature_lst=[attrs_dict['Start_Lng'],
+             attrs_dict['Start_Lat'],
+             lookup_val_in_json('side_map.json', attrs_dict['Side']),
+             lookup_val_in_json('city_map.json', attrs_dict['City']),
+             lookup_val_in_json('county_map.json', attrs_dict['County']),
+             lookup_val_in_json('state_map.json', attrs_dict['State']),
+             attrs_dict['Temperature(F)'],
+             attrs_dict['Humidity(%)'],
+             attrs_dict['Pressure(in)'], 
+             lookup_val_in_json('wind_dir_map.json', attrs_dict['Wind_Direction']),
+             attrs_dict['Wind_Speed(mph)'],
+             attrs_dict['Visibility(mi)'], 
+             lookup_val_in_json('sunrise_sunset_map.json', attrs_dict['Sunrise_Sunset']),
+             attrs_dict['Crossing'],
+             attrs_dict['Give_Way'],
+             attrs_dict['Railway'],
+             attrs_dict['Station'],
+             attrs_dict['Traffic_Calming'],
+             attrs_dict['Traffic_Signal'],
+             lookup_val_in_json('weekday_map.json', attrs_dict['Weekday']),
+             lookup_val_in_json('month_map.json', attrs_dict['Month']),
+             attrs_dict['Year']] 
+    return feature_lst
