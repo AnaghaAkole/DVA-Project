@@ -1,7 +1,7 @@
 'This file includes Machine Learning model for predicting accidents'
 from sklearn.externals import joblib
 from datetime import datetime
-from Backend.Util.util import get_weather_info, predict_input_format_wrapper,merge,get_address_info
+from Backend.Util.util import get_weather_info, predict_input_format_wrapper,merge,get_address_info, get_topology_info
 
 
 class Model:
@@ -39,7 +39,8 @@ class Inference:
                 longitude = stops["longitude"]
                 weather_data = get_weather_info(latitude, longitude, current_date_time)
                 stops = merge(weather_data, stops)
-                # call open street maps API
+                topology_info = get_topology_info(latitude, longitude)
+                stops = merge(topology_info, stops)
                 model_features = predict_input_format_wrapper(stops)
                 severity += self.model.predict(model_features)
                 count += 1

@@ -89,9 +89,17 @@ def form_query(feature, bbox):
     return overpass_query
 
 
-def get_topology_info(feature, bbox):
+def get_topology_info(latitude, longitude):
+
+    """
+
+    :param latitude:
+    :param longitude:
+    :return:dict: {"traffic_calming":True ......}
+    """
     overpass_url = "http://overpass-api.de/api/interpreter"
     overpass_query = ""
+    feature = None
     # use bbox coordinates in query . Currently giving dummy coordinates
     bbox = "(50.6,7.0,50.8,7.3)"
     if feature == 'traffic_calming':
