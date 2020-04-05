@@ -4,10 +4,16 @@ from geopy.geocoders import Nominatim
 import time
 
 
-def get_weather_info(lattitude, longitude, time):
+def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
+    '''expected date syntax: yyyy-mm-dd, time syntax: HH:MM:SS'''
+    final_time = str(date) + "T" + str(time)
+    lat = str(lattitude)
+    longi = str(longitude)
+
     filtered_data = dict()
+    query = 'https://api.darksky.net/forecast/b299af3ff2d76cdfd211d92bc24374da/' + lat + ',' + longi + ',' + final_time
     r = requests.get(
-        'https://api.darksky.net/forecast/b299af3ff2d76cdfd211d92bc24374da/42.3601,-71.0589,2020-03-25T04:08:30',
+        query,
         verify=False)
     data = r.json()
     filtered_data['temperature'] = data['currently']['temperature']
