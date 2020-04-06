@@ -36,18 +36,11 @@ def show_map():
 
 
 @app.post("/maps/safepath")
-def get_safest_route(request: Request):
-    request_body = request.body()
-    inference_obj.find_safest_path(request_body)
-    pass
-
-
 async def get_safest_route(request: Request):
     params = await request.body()
     data = json.loads(params.decode(encoding='UTF-8'))
-    address_data = get_address_info(data)
-    print(address_data)
-
+    routes = inference_obj.find_safest_path(data)
+    print (routes)
 
 
 

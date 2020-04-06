@@ -17,18 +17,18 @@ def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
         query,
         verify=False)
     data = r.json()
-    filtered_data['temperature'] = data['currently']['temperature']
-    filtered_data['pressure'] = data['currently']['pressure']
-    filtered_data['humidity'] = data['currently']['humidity']
-    filtered_data['windBearing'] = data['currently']['windBearing']
-    filtered_data['windSpeed'] = data['currently']['windSpeed']
-    filtered_data['visibility'] = data['currently']['visibility']
+    filtered_data['Temperature(F)'] = data['currently']['temperature']
+    filtered_data['Pressure(in)'] = data['currently']['pressure']
+    filtered_data['Humidity(%)'] = data['currently']['humidity']
+    filtered_data['Wind_Direction'] = data['currently']['windBearing']
+    filtered_data['Wind_Speed(mph)'] = data['currently']['windSpeed']
+    filtered_data['Visibility(mi)'] = data['currently']['visibility']
     date = datetime.datetime.fromtimestamp(data['currently']['time']).strftime('%H:%M:%S')
     date = date.split(':')
     if int(date[0]) <= 7 or int(date[0]) >= 19:
-        filtered_data['day_night'] = 'Night'
+        filtered_data['Sunrise_Sunset'] = 'Night'
     else:
-        filtered_data['day_night'] = 'Day'
+        filtered_data['Sunrise_Sunset'] = 'Day'
     print(filtered_data)
     return filtered_data
 
@@ -45,11 +45,11 @@ def get_address_info(data):
         for r in route:
             location = geolocator.reverse(', '.join([str(r['latitude']), str(r['longitude'])]), timeout=600000)
             if 'address' in location.raw:
-                r['county'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county']
+                r['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county']
                 r['postcode'] = '' if 'postcode' not in location.raw['address'] else location.raw['address']['postcode']
-                r['street'] = '' if 'road' not in location.raw['address'] else location.raw['address']['road']
-                r['city'] = '' if 'city' not in location.raw['address'] else location.raw['address']['city']
-                r['state'] = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
+                r['Side'] = 'R'
+                r['City'] = '' if 'city' not in location.raw['address'] else location.raw['address']['city']
+                r['State'] = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
     result = {
         'start_lat': route_obj[0]['latitude'],
         'start_long': route_obj[0]['longitude'],
@@ -84,19 +84,19 @@ def get_topology_info(latitude, longitude):
     result['traffic_calming'] = is_present(overpass_query)
 
     overpass_query = form_query("""["highway"="crossing"]""", bbox)
-    result['crossing'] = is_present(overpass_query)
+    result['Crossing'] = is_present(overpass_query)
 
     overpass_query = form_query("""["highway"="give_way"]""", bbox)
-    result['give_way'] = is_present(overpass_query)
+    result['Give_Way'] = is_present(overpass_query)
 
     overpass_query = form_query("""["public_transport"="station"]""", bbox)
     result['station'] = is_present(overpass_query)
 
     overpass_query = form_query("""["railway"="level_crossing"]""", bbox)
-    result['railway'] = is_present(overpass_query)
+    result['Railway'] = is_present(overpass_query)
 
     overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
-    result['traffic_signals'] = is_present(overpass_query)
+    result['Traffic_Signal'] = is_present(overpass_query)
 
     print(result)
     return result
@@ -120,7 +120,8 @@ def merge(dict1, dict2):
 def lookup_val_in_json(json_file, key):
     if json_file == "wind_dir_map.json":
         key = key.upper()
-    with open(json_file) as f: 
+    path = "/Users/piyush/Documents/DVA/DVA-Project/Backend/Util/" + json_file
+    with open(path) as f:
         loaded_json = json.load(f)
     return loaded_json[key]
 
@@ -131,8 +132,8 @@ def predict_input_format_wrapper(attrs_dict):
         Argument  : dict of input attributes with same naming as in the dataset
         Return    : list of attributes to be passed to model.predict method
     """
-    feature_lst=[attrs_dict['Start_Lng'],
-             attrs_dict['Start_Lat'],
+    feature_lst=[attrs_dict['longitude'],
+             attrs_dict['latitude'],
              lookup_val_in_json('side_map.json', attrs_dict['Side']),
              lookup_val_in_json('city_map.json', attrs_dict['City']),
              lookup_val_in_json('county_map.json', attrs_dict['County']),
@@ -150,7 +151,7 @@ def predict_input_format_wrapper(attrs_dict):
              attrs_dict['Station'],
              attrs_dict['Traffic_Calming'],
              attrs_dict['Traffic_Signal'],
-             lookup_val_in_json('weekday_map.json', attrs_dict['Weekday']),
-             lookup_val_in_json('month_map.json', attrs_dict['Month']),
+             attrs_dict['Weekday'],
+             attrs_dict['Month'],
              attrs_dict['Year']] 
     return feature_lst
