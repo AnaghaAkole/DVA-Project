@@ -22,8 +22,9 @@ function searchCities(isStart) {
 			if (cities[i].toString().toUpperCase() === filter) {
 				while(list.firstChild) list.removeChild(list.firstChild);
 				flag = 1;
+				break;
 			}
-			else if (cities[i].toString().toUpperCase().indexOf(filter) > -1 && count < 10)  {
+			else if (cities[i].toString().toUpperCase().indexOf(filter) > -1 && count < 20)  {
 				let li = document.createElement('option');
 				li.innerHTML = cities[i];
 				li.style.display = "block";
@@ -109,7 +110,7 @@ function findAndDisplayRoute(directionsService, directionsRenderer) {
 					"routes": requestBody
 				}
 				console.log(finalRequestBody);
-				getSafestRoute(finalRequestBody);
+				//getSafestRoute(finalRequestBody);
               	// modify the response here to remove unsafe routes from routes[] array to render only safest route on the UI
               	directionsRenderer.setDirections(response);
               } else {
@@ -121,11 +122,16 @@ function findAndDisplayRoute(directionsService, directionsRenderer) {
 }
 // call the api to get safest path
 function getSafestRoute(params) {
-	var request = new XMLHttpRequest()
-	request.open('POST','http://127.0.0.1:8000/maps/safepath', true)
-
-	request.onload = function() {
-		console.log("response received");
+	let fetchData = { 
+	    method: 'POST', 
+	    body: JSON.stringify(params),
+	    headers: new Headers({
+	    	"content-type": "application/json"
+	    }),
+	    mode: "no-cors"
 	}
-	request.send(params);
+	fetch('http://127.0.0.1:8000/maps/safepath', fetchData)
+	.then(function(data) {
+	    console.log(data);
+	})
 }
