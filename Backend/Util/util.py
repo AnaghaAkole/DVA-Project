@@ -2,7 +2,6 @@
 import requests, json, datetime
 from geopy.geocoders import Nominatim
 import json
-import time
 
 
 def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
@@ -20,7 +19,7 @@ def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
     filtered_data['Temperature(F)'] = data['currently']['temperature']
     filtered_data['Pressure(in)'] = data['currently']['pressure']
     filtered_data['Humidity(%)'] = data['currently']['humidity']
-    filtered_data['Wind_Direction'] = data['currently']['windBearing']
+    filtered_data['Wind_Direction'] = wind_deg_to_str2(data['currently']['windBearing'])
     filtered_data['Wind_Speed(mph)'] = data['currently']['windSpeed']
     filtered_data['Visibility(mi)'] = data['currently']['visibility']
     date = datetime.datetime.fromtimestamp(data['currently']['time']).strftime('%H:%M:%S')
@@ -29,32 +28,25 @@ def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
         filtered_data['Sunrise_Sunset'] = 'Night'
     else:
         filtered_data['Sunrise_Sunset'] = 'Day'
-    print(filtered_data)
     return filtered_data
 
 
+def wind_deg_to_str2(deg):
+    arr = ['NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N']
+    return arr[int(abs((deg - 11.25) % 360) / 22.5)]
 
-def get_address_info(data):
+
+def get_address_info(lat, longi):
     geolocator = Nominatim(user_agent='DVA-project')
-    route_obj = data[0]['route']
-    for obj in data:
-        route = obj['route']
-        duration = obj['duration']
-        obj['start_time'] = time.time()
-        obj['end_time'] = obj['start_time'] + duration
-        for r in route:
-            location = geolocator.reverse(', '.join([str(r['latitude']), str(r['longitude'])]), timeout=600000)
-            if 'address' in location.raw:
-                r['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county']
-                r['postcode'] = '' if 'postcode' not in location.raw['address'] else location.raw['address']['postcode']
-                r['Side'] = 'R'
-                r['City'] = '' if 'city' not in location.raw['address'] else location.raw['address']['city']
-                r['State'] = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
-    result = {
-        'start_lat': route_obj[0]['latitude'],
-        'start_long': route_obj[0]['longitude'],
-        'data': data
-    }
+    location = geolocator.reverse(', '.join([str(lat), str(longi)]), timeout=600000)
+    result = {}
+    if 'address' in location.raw:
+        result['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county'].split(" ")[0]
+        result['Side'] = 'R'
+        result['City'] = 'Aaronsburg' if 'city' not in location.raw['address'] else location.raw['address']['city']
+        state = '' if 'state' not in location.raw['address'] else location.raw['address']['state'][0:2]
+        result['State'] = state.upper()
+
     return result
 
 
@@ -78,10 +70,10 @@ def get_topology_info(latitude, longitude):
     """
     # use bbox coordinates in query . Currently giving dummy coordinates
     # bbox = "(50.6,7.0,50.8,7.3)"
-    bbox = "("+str(latitude-0.5)+","+str(longitude-0.5)+","+str(latitude+0.5)+","+str(longitude+0.5)+")"
+    bbox = "("+str(latitude-0.2)+","+str(longitude-0.2)+","+str(latitude+0.2)+","+str(longitude+0.2)+")"
     result = {}
     overpass_query = form_query("""["traffic_calming"="yes"]""", bbox)
-    result['traffic_calming'] = is_present(overpass_query)
+    result['Traffic_Calming'] = is_present(overpass_query)
 
     overpass_query = form_query("""["highway"="crossing"]""", bbox)
     result['Crossing'] = is_present(overpass_query)
@@ -90,7 +82,7 @@ def get_topology_info(latitude, longitude):
     result['Give_Way'] = is_present(overpass_query)
 
     overpass_query = form_query("""["public_transport"="station"]""", bbox)
-    result['station'] = is_present(overpass_query)
+    result['Station'] = is_present(overpass_query)
 
     overpass_query = form_query("""["railway"="level_crossing"]""", bbox)
     result['Railway'] = is_present(overpass_query)
@@ -98,7 +90,6 @@ def get_topology_info(latitude, longitude):
     overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
     result['Traffic_Signal'] = is_present(overpass_query)
 
-    print(result)
     return result
 
 
@@ -106,7 +97,10 @@ def is_present(overpass_query):
     overpass_url = "http://overpass-api.de/api/interpreter"
     response = requests.get(overpass_url,
                             params={'data': overpass_query})
-    data = response.json()
+    try:
+        data = response.json()
+    except:
+        return False
     if data and 'elements' in data and len(data['elements']) > 0:
         return True
     else:
@@ -114,16 +108,18 @@ def is_present(overpass_query):
 
 
 def merge(dict1, dict2):
-    return dict2.update(dict1)
+    dict2.update(dict1)
+    return dict2
 
 
 def lookup_val_in_json(json_file, key):
     if json_file == "wind_dir_map.json":
         key = key.upper()
-    path = "/Users/piyush/Documents/DVA/DVA-Project/Backend/Util/" + json_file
+    path = "/Users/gurleen_kaur/Documents/georgia/DVA/dva_project2/DVA-Project/Backend/Util/" + json_file
     with open(path) as f:
         loaded_json = json.load(f)
     return loaded_json[key]
+
 
 def predict_input_format_wrapper(attrs_dict):
     """
