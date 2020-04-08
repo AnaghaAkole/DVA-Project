@@ -1,12 +1,12 @@
 'This file includes helper functions that are useful for ML model'
-import requests, json, datetime
+import requests, datetime, time
 from geopy.geocoders import Nominatim
-import json
+from Util.lookup_json import side_map, city_map, county_map, sunrise_sunset_map, wind_dir_map, state_map
+from joblib import Parallel, delayed
 
-
-def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
+def get_weather_info(lattitude=None, longitude=None, date=None, t=None):
     '''expected date syntax: yyyy-mm-dd, time syntax: HH:MM:SS'''
-    final_time = str(date) + "T" + str(time)
+    final_time = str(date) + "T" + str(t)
     lat = str(lattitude)
     longi = str(longitude)
 
@@ -46,7 +46,6 @@ def get_address_info(lat, longi):
         result['City'] = 'Aaronsburg' if 'city' not in location.raw['address'] else location.raw['address']['city']
         state = '' if 'state' not in location.raw['address'] else location.raw['address']['state'][0:2]
         result['State'] = state.upper()
-
     return result
 
 
@@ -72,39 +71,33 @@ def get_topology_info(latitude, longitude):
     # bbox = "(50.6,7.0,50.8,7.3)"
     bbox = "("+str(latitude-0.2)+","+str(longitude-0.2)+","+str(latitude+0.2)+","+str(longitude+0.2)+")"
     result = {}
-    overpass_query = form_query("""["traffic_calming"="yes"]""", bbox)
-    result['Traffic_Calming'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["highway"="crossing"]""", bbox)
-    result['Crossing'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["highway"="give_way"]""", bbox)
-    result['Give_Way'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["public_transport"="station"]""", bbox)
-    result['Station'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["railway"="level_crossing"]""", bbox)
-    result['Railway'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
-    result['Traffic_Signal'] = is_present(overpass_query)
-
-    return result
+    features = ['Traffic_Calming', 'Crossing', 'Give_Way', 'Station', 'Railway', 'Traffic_Signal']
+    overpass_queries = [form_query("""["traffic_calming"="yes"]""", bbox),
+                         form_query("""["highway"="crossing"]""", bbox),
+     form_query("""["highway"="give_way"]""", bbox),
+     form_query("""["public_transport"="station"]""", bbox),
+    form_query("""["railway"="level_crossing"]""", bbox),
+    form_query("""["crossing"="traffic_signals"]""", bbox) ]
+    result = Parallel(n_jobs=6)(delayed(is_present)(overpass_queries, features, i) for i in range(6))
+    final_result = {}
+    for i in result:
+        final_result.update(i)
+    print(final_result)
+    return final_result
 
 
-def is_present(overpass_query):
+def is_present(overpass_queries, features, i):
     overpass_url = "http://overpass-api.de/api/interpreter"
     response = requests.get(overpass_url,
-                            params={'data': overpass_query})
+                            params={'data': overpass_queries[i]})
     try:
         data = response.json()
     except:
-        return False
+        return { features[i]: False }
     if data and 'elements' in data and len(data['elements']) > 0:
-        return True
+        return { features[i]: True }
     else:
-        return False
+        return { features[i]: False}
 
 
 def merge(dict1, dict2):
@@ -112,13 +105,13 @@ def merge(dict1, dict2):
     return dict2
 
 
-def lookup_val_in_json(json_file, key):
-    if json_file == "wind_dir_map.json":
-        key = key.upper()
-    path = "/Users/gurleen_kaur/Documents/georgia/DVA/dva_project2/DVA-Project/Backend/Util/" + json_file
-    with open(path) as f:
-        loaded_json = json.load(f)
-    return loaded_json[key]
+# def lookup_val_in_json(json_file, key):
+#     if json_file == "wind_dir_map.json":
+#         key = key.upper()
+#     path = "/Users/gurleen_kaur/Documents/georgia/DVA/dva_project2/DVA-Project/Backend/Util/" + json_file
+#     with open(path) as f:
+#         loaded_json = json.load(f)
+#     return loaded_json[key]
 
 
 def predict_input_format_wrapper(attrs_dict):
@@ -128,19 +121,20 @@ def predict_input_format_wrapper(attrs_dict):
         Argument  : dict of input attributes with same naming as in the dataset
         Return    : list of attributes to be passed to model.predict method
     """
+    print("wrapper start", time.time(), attrs_dict['latitude'], attrs_dict['longitude'] )
     feature_lst=[attrs_dict['longitude'],
              attrs_dict['latitude'],
-             lookup_val_in_json('side_map.json', attrs_dict['Side']),
-             lookup_val_in_json('city_map.json', attrs_dict['City']),
-             lookup_val_in_json('county_map.json', attrs_dict['County']),
-             lookup_val_in_json('state_map.json', attrs_dict['State']),
+             side_map[attrs_dict['Side']],
+             city_map[attrs_dict['City']],
+             county_map[attrs_dict['County']],
+             state_map[attrs_dict['State']],
              attrs_dict['Temperature(F)'],
              attrs_dict['Humidity(%)'],
              attrs_dict['Pressure(in)'], 
-             lookup_val_in_json('wind_dir_map.json', attrs_dict['Wind_Direction']),
+             wind_dir_map[attrs_dict['Wind_Direction'].upper()],
              attrs_dict['Wind_Speed(mph)'],
              attrs_dict['Visibility(mi)'], 
-             lookup_val_in_json('sunrise_sunset_map.json', attrs_dict['Sunrise_Sunset']),
+             sunrise_sunset_map[attrs_dict['Sunrise_Sunset']],
              attrs_dict['Crossing'],
              attrs_dict['Give_Way'],
              attrs_dict['Railway'],
@@ -149,5 +143,6 @@ def predict_input_format_wrapper(attrs_dict):
              attrs_dict['Traffic_Signal'],
              attrs_dict['Weekday'],
              attrs_dict['Month'],
-             attrs_dict['Year']] 
+             attrs_dict['Year']]
+    print("wrapper end", time.time(), attrs_dict['latitude'], attrs_dict['longitude'])
     return feature_lst
