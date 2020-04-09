@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from starlette.requests import Request
 from .ml.model import Inference
+from .Analytics.analytics import fetch_city_and_accident_counts
 from sqlalchemy import create_engine
 from fastapi.middleware.cors import CORSMiddleware
 from .Util.util import get_address_info
@@ -53,3 +54,7 @@ def get_cities():
     for i in query.cursor:
         res.append(i)
     return {"results": res}
+
+@app.get("/maps/hotspots")
+def get_accident_hot_spots():
+    return fetch_city_and_accident_counts()
