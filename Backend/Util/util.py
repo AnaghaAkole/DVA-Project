@@ -3,8 +3,11 @@ import requests, datetime, time
 from geopy.geocoders import Nominatim
 from Util.lookup_json import side_map, city_map, county_map, sunrise_sunset_map, wind_dir_map, state_map
 from joblib import Parallel, delayed
+import urllib3
 
 def get_weather_info(lattitude=None, longitude=None, date=None, t=None):
+    print("weather")
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     '''expected date syntax: yyyy-mm-dd, time syntax: HH:MM:SS'''
     final_time = str(date) + "T" + str(t)
     lat = str(lattitude)
@@ -37,8 +40,9 @@ def wind_deg_to_str2(deg):
 
 
 def get_address_info(lat, longi):
+    print("address")
     geolocator = Nominatim(user_agent='DVA-project')
-    location = geolocator.reverse(', '.join([str(lat), str(longi)]), timeout=600000)
+    location = geolocator.reverse(', '.join([str(lat), str(longi)]), timeout=100)
     result = {}
     if 'address' in location.raw:
         result['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county'].split(" ")[0]
@@ -51,7 +55,7 @@ def get_address_info(lat, longi):
 
 def form_query(feature, bbox):
     overpass_query = """
-    [out:json][timeout:50000];
+    [out:json][timeout:1];
     node
     """ + feature + bbox + """; 
     out body;
@@ -60,7 +64,7 @@ def form_query(feature, bbox):
 
 
 def get_topology_info(latitude, longitude):
-
+    print("overpass")
     """
 
     :param latitude:
@@ -82,15 +86,16 @@ def get_topology_info(latitude, longitude):
     final_result = {}
     for i in result:
         final_result.update(i)
-    print(final_result)
     return final_result
 
 
 def is_present(overpass_queries, features, i):
+    #print("is_present", overpass_queries[i])
     overpass_url = "http://overpass-api.de/api/interpreter"
-    response = requests.get(overpass_url,
-                            params={'data': overpass_queries[i]})
+    #print(response)
     try:
+        response = requests.get(overpass_url,
+                                params={'data': overpass_queries[i]}, timeout=1)
         data = response.json()
     except:
         return { features[i]: False }
@@ -121,20 +126,19 @@ def predict_input_format_wrapper(attrs_dict):
         Argument  : dict of input attributes with same naming as in the dataset
         Return    : list of attributes to be passed to model.predict method
     """
-    print("wrapper start", time.time(), attrs_dict['latitude'], attrs_dict['longitude'] )
     feature_lst=[attrs_dict['longitude'],
              attrs_dict['latitude'],
              side_map[attrs_dict['Side']],
              city_map[attrs_dict['City']],
              county_map[attrs_dict['County']],
              state_map[attrs_dict['State']],
-             attrs_dict['Temperature(F)'],
-             attrs_dict['Humidity(%)'],
-             attrs_dict['Pressure(in)'], 
-             wind_dir_map[attrs_dict['Wind_Direction'].upper()],
-             attrs_dict['Wind_Speed(mph)'],
-             attrs_dict['Visibility(mi)'], 
-             sunrise_sunset_map[attrs_dict['Sunrise_Sunset']],
+             # attrs_dict['Temperature(F)'],
+             # attrs_dict['Humidity(%)'],
+             # attrs_dict['Pressure(in)'],
+             # wind_dir_map[attrs_dict['Wind_Direction'].upper()],
+             # attrs_dict['Wind_Speed(mph)'],
+             # attrs_dict['Visibility(mi)'],
+             # sunrise_sunset_map[attrs_dict['Sunrise_Sunset']],
              attrs_dict['Crossing'],
              attrs_dict['Give_Way'],
              attrs_dict['Railway'],
@@ -144,5 +148,4 @@ def predict_input_format_wrapper(attrs_dict):
              attrs_dict['Weekday'],
              attrs_dict['Month'],
              attrs_dict['Year']]
-    print("wrapper end", time.time(), attrs_dict['latitude'], attrs_dict['longitude'])
     return feature_lst

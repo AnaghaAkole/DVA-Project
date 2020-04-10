@@ -1,5 +1,5 @@
 'This file includes Machine Learning model for predicting accidents'
-from sklearn.externals import joblib
+import joblib
 from datetime import date
 from Util.util import get_weather_info, predict_input_format_wrapper, merge, get_address_info, get_topology_info
 from joblib import Parallel, delayed
@@ -11,7 +11,7 @@ class Model:
         self.model = self.load_model()
 
     def load_model(self):
-       return joblib.load('ML/ML_model.sav')
+        return joblib.load('ML/ML_model.sav')
 
     def predict(self, input):
         return self.model.predict(input)[0]
@@ -22,7 +22,6 @@ class Inference:
     def __init__(self):
         self.model = Model()
         self.model.load_model()
-        print("App started")
 
     def find_safest_path(self, routes):
         # yyyy-mm-dd HH:MM:SS
@@ -35,14 +34,19 @@ class Inference:
         day = date_ui.split("-")[2]
         date_obj = date(int(year), int(month), int(day))
         severity_scores = []
+        print("Start", time.time())
         for route in routes_arr:
             s = len(route)
             print("Start",time.time())
-            model_features = Parallel(n_jobs=s)(delayed(self.get_res)(stop, date_obj, date_ui, t) for stop in route)
-            print(model_features)
+            model_features = Parallel(n_jobs=s)(delayed(get_res)(stop, date_obj, date_ui, t) for stop in route)
             print("done", time.time())
-            severity = self.model.predict(model_features)
-
+            severity=0
+            count =0
+            # for features in model_features:
+            #     severity += self.model.predict([features])
+            #     count += 1
+            #severity_scores.append(severity / count)
+        print("End", time.time())
             # for stop in route:
             #     latitude = stop["latitude"]
             #     longitude = stop["longitude"]
@@ -59,18 +63,17 @@ class Inference:
             #     model_features = predict_input_format_wrapper(data)
             #     severity += self.model.predict([model_features])
             #     count += 1
-            severity_scores.append(sum(severity)/ len(route))
         routes['severity_scores'] = severity_scores
         return routes
 
-    def get_res(self, stop, date_obj, date_ui, t ):
+def get_res( stop, date_obj, date_ui, t ):
         latitude = stop["latitude"]
         longitude = stop["longitude"]
         data = stop
         address_data = get_address_info(latitude, longitude)
         data = merge(data, address_data)
-        weather_data = get_weather_info(latitude, longitude, date_ui, t)
-        data = merge(weather_data, data)
+        #weather_data = get_weather_info(latitude, longitude, date_ui, t)
+        #data = merge(weather_data, data)
         topology_info = get_topology_info(latitude, longitude)
         data = merge(topology_info, data)
         data['Weekday'] = date_obj.isoweekday()

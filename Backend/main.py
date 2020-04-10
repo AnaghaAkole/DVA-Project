@@ -37,7 +37,6 @@ def show_map():
 async def get_safest_route(request: Request):
     params = await request.json()
     routes = inference_obj.find_safest_path(params)
-    print (routes)
     return routes
 
 
