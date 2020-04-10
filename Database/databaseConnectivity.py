@@ -18,7 +18,7 @@ class Database:
 
     @classmethod
     def create_connection(cls):
-        return sqlite3.connect('../Database/pythonsqlite.db')
+        return sqlite3.connect('Database/pythonsqlite.db', check_same_thread=False)
 
     def execute(self, query):
         return self.connection.execute(query)
