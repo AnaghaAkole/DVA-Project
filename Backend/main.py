@@ -1,20 +1,16 @@
 from fastapi import FastAPI
 from starlette.requests import Request
-from .ml.model import Inference
+from .ML.model import Inference
 from .Analytics.analytics import fetch_city_and_accident_counts, fetch_cities, fetch_day_wise_count, fetch_Description
 from fastapi.middleware.cors import CORSMiddleware
-import json
 
 
 app = FastAPI()
 inference_obj = Inference()
 
-origins = [
-    "http://localhost:8080"
-]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -45,6 +41,7 @@ async def get_safest_route(request: Request):
 @app.get("/cities")
 def get_cities():
     return fetch_cities()
+
 
 @app.get("/maps/hotspots")
 def get_accident_hot_spots():

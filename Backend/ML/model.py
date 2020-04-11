@@ -1,9 +1,10 @@
 'This file includes Machine Learning model for predicting accidents'
 import joblib
 from datetime import date
-from Util.util import get_weather_info, predict_input_format_wrapper, merge, get_address_info, get_topology_info
+from Backend.Util.util import get_weather_info, predict_input_format_wrapper, merge, get_address_info, get_topology_info
 from joblib import Parallel, delayed
 import time
+
 
 class Model:
 
@@ -11,10 +12,10 @@ class Model:
         self.model = self.load_model()
 
     def load_model(self):
-        return joblib.load('ML/ML_model.sav')
+        return joblib.load('Backend/ML/ML_model.sav')
 
-    def predict(self, input):
-        return self.model.predict(input)[0]
+    def predict(self, input_val):
+        return self.model.predict(input_val)[0]
 
 
 class Inference:
@@ -37,43 +38,26 @@ class Inference:
         print("Start", time.time())
         for route in routes_arr:
             s = len(route)
-            print("Start",time.time())
-            model_features = Parallel(n_jobs=s)(delayed(get_res)(stop, date_obj, date_ui, t) for stop in route)
-            print("done", time.time())
+            model_features = Parallel(n_jobs=s)(delayed(self.get_model_features)(stop, date_obj, date_ui, t) for stop in route)
             severity=0
             count =0
-            # for features in model_features:
-            #     severity += self.model.predict([features])
-            #     count += 1
-            #severity_scores.append(severity / count)
+            for features in model_features:
+                severity += self.model.predict([features])
+                count += 1
+            severity_scores.append(severity / count)
         print("End", time.time())
-            # for stop in route:
-            #     latitude = stop["latitude"]
-            #     longitude = stop["longitude"]
-            #     data = stop
-            #     address_data = get_address_info(latitude, longitude)
-            #     data = merge(data, address_data)
-            #     weather_data = get_weather_info(latitude, longitude, date_ui, time)
-            #     data = merge(weather_data, data)
-            #     topology_info = get_topology_info(latitude, longitude)
-            #     data = merge(topology_info, data)
-            #     data['Weekday'] = date_obj.isoweekday()
-            #     data['Year'] = date_obj.year
-            #     data['Month'] = date_obj.month
-            #     model_features = predict_input_format_wrapper(data)
-            #     severity += self.model.predict([model_features])
-            #     count += 1
         routes['severity_scores'] = severity_scores
         return routes
 
-def get_res( stop, date_obj, date_ui, t ):
+    @staticmethod
+    def get_model_features(stop, date_obj, date_ui, t):
         latitude = stop["latitude"]
         longitude = stop["longitude"]
         data = stop
         address_data = get_address_info(latitude, longitude)
         data = merge(data, address_data)
-        #weather_data = get_weather_info(latitude, longitude, date_ui, t)
-        #data = merge(weather_data, data)
+        weather_data = get_weather_info(latitude, longitude, date_ui, t)
+        data = merge(weather_data, data)
         topology_info = get_topology_info(latitude, longitude)
         data = merge(topology_info, data)
         data['Weekday'] = date_obj.isoweekday()

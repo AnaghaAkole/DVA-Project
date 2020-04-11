@@ -1,12 +1,11 @@
 'This file includes helper functions that are useful for ML model'
-import requests, datetime, time
+import requests, datetime
 from geopy.geocoders import Nominatim
-from Util.lookup_json import side_map, city_map, county_map, sunrise_sunset_map, wind_dir_map, state_map
+from Backend.Util.lookup_json import side_map, city_map, county_map, sunrise_sunset_map, wind_dir_map, state_map, state_abbrev_map
 from joblib import Parallel, delayed
 import urllib3
 
 def get_weather_info(lattitude=None, longitude=None, date=None, t=None):
-    print("weather")
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     '''expected date syntax: yyyy-mm-dd, time syntax: HH:MM:SS'''
     final_time = str(date) + "T" + str(t)
@@ -18,6 +17,7 @@ def get_weather_info(lattitude=None, longitude=None, date=None, t=None):
     r = requests.get(
         query,
         verify=False)
+    print(r)
     data = r.json()
     filtered_data['Temperature(F)'] = data['currently']['temperature']
     filtered_data['Pressure(in)'] = data['currently']['pressure']
@@ -40,16 +40,15 @@ def wind_deg_to_str2(deg):
 
 
 def get_address_info(lat, longi):
-    print("address")
     geolocator = Nominatim(user_agent='DVA-project')
     location = geolocator.reverse(', '.join([str(lat), str(longi)]), timeout=100)
     result = {}
     if 'address' in location.raw:
-        result['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county'].split(" ")[0]
+        result['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county'].replace("County","")
         result['Side'] = 'R'
         result['City'] = 'Aaronsburg' if 'city' not in location.raw['address'] else location.raw['address']['city']
-        state = '' if 'state' not in location.raw['address'] else location.raw['address']['state'][0:2]
-        result['State'] = state.upper()
+        state_full = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
+        result['State'] = state_abbrev_map[state_full]
     return result
 
 
@@ -64,24 +63,15 @@ def form_query(feature, bbox):
 
 
 def get_topology_info(latitude, longitude):
-    print("overpass")
-    """
-
-    :param latitude:
-    :param longitude:
-    :return:dict: {"traffic_calming":True ......}
-    """
-    # use bbox coordinates in query . Currently giving dummy coordinates
     # bbox = "(50.6,7.0,50.8,7.3)"
     bbox = "("+str(latitude-0.2)+","+str(longitude-0.2)+","+str(latitude+0.2)+","+str(longitude+0.2)+")"
-    result = {}
     features = ['Traffic_Calming', 'Crossing', 'Give_Way', 'Station', 'Railway', 'Traffic_Signal']
     overpass_queries = [form_query("""["traffic_calming"="yes"]""", bbox),
-                         form_query("""["highway"="crossing"]""", bbox),
-     form_query("""["highway"="give_way"]""", bbox),
-     form_query("""["public_transport"="station"]""", bbox),
-    form_query("""["railway"="level_crossing"]""", bbox),
-    form_query("""["crossing"="traffic_signals"]""", bbox) ]
+                        form_query("""["highway"="crossing"]""", bbox),
+                        form_query("""["highway"="give_way"]""", bbox),
+                        form_query("""["public_transport"="station"]""", bbox),
+                        form_query("""["railway"="level_crossing"]""", bbox),
+                        form_query("""["crossing"="traffic_signals"]""", bbox) ]
     result = Parallel(n_jobs=6)(delayed(is_present)(overpass_queries, features, i) for i in range(6))
     final_result = {}
     for i in result:
@@ -90,9 +80,7 @@ def get_topology_info(latitude, longitude):
 
 
 def is_present(overpass_queries, features, i):
-    #print("is_present", overpass_queries[i])
     overpass_url = "http://overpass-api.de/api/interpreter"
-    #print(response)
     try:
         response = requests.get(overpass_url,
                                 params={'data': overpass_queries[i]}, timeout=1)
@@ -126,19 +114,19 @@ def predict_input_format_wrapper(attrs_dict):
         Argument  : dict of input attributes with same naming as in the dataset
         Return    : list of attributes to be passed to model.predict method
     """
-    feature_lst=[attrs_dict['longitude'],
+    feature_lst = [attrs_dict['longitude'],
              attrs_dict['latitude'],
              side_map[attrs_dict['Side']],
-             city_map[attrs_dict['City']],
-             county_map[attrs_dict['County']],
+             0 if attrs_dict['City'] not in city_map else  city_map[attrs_dict['City']],
+             0 if attrs_dict['County'] not in county_map else county_map[attrs_dict['County']],
              state_map[attrs_dict['State']],
-             # attrs_dict['Temperature(F)'],
-             # attrs_dict['Humidity(%)'],
-             # attrs_dict['Pressure(in)'],
-             # wind_dir_map[attrs_dict['Wind_Direction'].upper()],
-             # attrs_dict['Wind_Speed(mph)'],
-             # attrs_dict['Visibility(mi)'],
-             # sunrise_sunset_map[attrs_dict['Sunrise_Sunset']],
+             attrs_dict['Temperature(F)'],
+             attrs_dict['Humidity(%)'],
+             attrs_dict['Pressure(in)'],
+             wind_dir_map[attrs_dict['Wind_Direction'].upper()],
+             attrs_dict['Wind_Speed(mph)'],
+             attrs_dict['Visibility(mi)'],
+             sunrise_sunset_map[attrs_dict['Sunrise_Sunset']],
              attrs_dict['Crossing'],
              attrs_dict['Give_Way'],
              attrs_dict['Railway'],
