@@ -7,10 +7,29 @@
   height: 100%;
   width: 75%;
   float: right;
+  background-image: url('us_accidents_description.png');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 #list-menu {
  width: 25%;
  float: left;
+ height: 100%;
+}
+.list-group {
+  height:100%;
+}
+.list-group-item {
+  height: 18%;
+  text-align: center;
+  font-size: 18px;
+  padding-top: 15%;
+  background-color: #e6f2ff;
+  margin-top: 5%;
+  margin-bottom: 5%;
+}
+.list-group-item:hover {
+  background-color: #80bfff;
 }
 #input-panel {
  background-color: white;
@@ -66,4 +85,21 @@
 
 #submit-div {
   margin-left: 40%
+}
+.tooltip {
+  padding: 6px;
+  padding-bottom: 0px;
+  background: white;
+  font-size: 10px;
+  font-weight: bold;
+  color: black;
+}
+.tooltip:after {
+  font-size: 8px;
+  width: 100%;
+  position: absolute;
+  text-align: center;
+  font-weight: bold;
+  color: white;
+  content: "\25BC";
 }

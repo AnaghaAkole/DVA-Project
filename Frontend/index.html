@@ -4,6 +4,8 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
 	<meta charset="utf-8">
 	<title>Just to be on the safe side</title>
+	<script type="text/javascript" src="lib/d3/d3.min.js"></script>
+	<script type="text/javascript" src="lib/d3/d3-tip.min.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/momentjs/2.14.1/moment.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -15,6 +17,7 @@
 </head>
 <body>
 	<script  type="text/javascript" src="maps.js"></script>
+	<script  type="text/javascript" src="daywiseStats.js"></script>
 	<div id = "input-panel">
 		<b>Start: </b>
 		<input list="origin_list" id="origin" onkeyup="searchCities(true)" onfocus="removeOldData(true)" placeholder="Search for origin city.." maxlength="50" autocomplete="off" spellcheck="off">
@@ -37,7 +40,15 @@
 		<div id = 'errorDiv'>City not found in the database</div>
 	</div>
 
-	<div id="list-menu"></div>
+	<div id="list-menu">
+		  <ul class="list-group">
+		  <li class="list-group-item">Safest Route</li>
+		  <li class="list-group-item">State-wise Accidents</li>
+		  <li class="list-group-item" onclick="findDayWiseStats()">Day-wise Accidents</li>
+		  <li class="list-group-item">Accident-prone-zones</li>
+		  <li class="list-group-item">Road Topology wise stats</li>
+		  </ul>
+	</div>
 	<div id="map"></div>
 
 	<script>
@@ -60,8 +71,8 @@
 			
 		
 	</script>
-    <script async defer
+   <!--<script async defer
     src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap">
-	</script>
+	</script>-->
 </body>
 </html>

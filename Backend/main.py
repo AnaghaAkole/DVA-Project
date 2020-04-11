@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from starlette.requests import Request
-from ML.model import Inference
-from sqlalchemy import create_engine
+from .ml.model import Inference
+from .Analytics.analytics import fetch_city_and_accident_counts, fetch_cities, fetch_day_wise_count, fetch_Description
 from fastapi.middleware.cors import CORSMiddleware
+import json
+
 
 app = FastAPI()
 inference_obj = Inference()
@@ -42,10 +44,13 @@ async def get_safest_route(request: Request):
 
 @app.get("/cities")
 def get_cities():
-    db_engine = create_engine('sqlite:///../Database/pythonsqlite.db')
-    conn = db_engine.connect()
-    query = conn.execute("select distinct(City) from us_accident_data;")
-    res = []
-    for i in query.cursor:
-        res.append(i)
-    return {"results": res}
+    return fetch_cities()
+
+@app.get("/maps/hotspots")
+def get_accident_hot_spots():
+    return fetch_city_and_accident_counts()
+
+
+@app.get("/daywiseCount")
+def get_day_wise_count():
+    return fetch_day_wise_count()

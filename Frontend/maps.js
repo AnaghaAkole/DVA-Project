@@ -1,14 +1,11 @@
-var request = new XMLHttpRequest()
-request.open('GET','http://127.0.0.1:8000/cities', true)
-
 var cities =[]
 var flag =0;
 
-request.onload = function() {
-	var f = JSON.parse(request.responseText);
-	cities = f.results
-}
-request.send();
+fetch('http://127.0.0.1:8000/cities')
+	.then((response) => response.json())
+	.then((result) => {
+		cities= result
+	})
 
 function searchCities(isStart) {
 	var count =0;
@@ -127,11 +124,11 @@ function getSafestRoute(params) {
 	    body: JSON.stringify(params),
 	    headers: new Headers({
 	    	"content-type": "application/json"
-	    }),
-	    mode: "no-cors"
+	    })
 	}
 	fetch('http://127.0.0.1:8000/maps/safepath', fetchData)
-	.then(function(data) {
-	    console.log(data);
+	.then((resp) => resp.json())
+	.then((d) => {
+		console.log(d);
 	})
 }
