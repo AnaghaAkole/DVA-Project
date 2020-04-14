@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from starlette.requests import Request
-from .ml.model import Inference
-from .Analytics.analytics import fetch_city_and_accident_counts, fetch_cities, fetch_day_wise_count, fetch_Description
+from Backend.ML.model import Inference
+from .Analytics.analytics import fetch_city_hot_spots, fetch_cities, fetch_day_wise_count, fetch_Description
 from fastapi.middleware.cors import CORSMiddleware
 
 import json
@@ -10,7 +10,7 @@ app = FastAPI()
 inference_obj = Inference()
 
 origins = [
-    "http://localhost:8080",
+    "*",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -50,7 +50,7 @@ def get_cities():
 
 @app.get("/maps/hotspots")
 def get_accident_hot_spots():
-    return fetch_city_and_accident_counts()
+    return {"results": fetch_city_hot_spots()}
 
 
 @app.get("/daywiseCount")
