@@ -3,6 +3,8 @@ from Database.databaseConnectivity import Database
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import numpy as np
 from PIL import Image
+import os
+import json
 
 db = Database()
 
@@ -53,3 +55,38 @@ def generate_word_cloud():
     wordcloud.recolor(color_func=image_colors)
     wordcloud.to_file("us_accidents_description.png")
     return text
+
+def convert_abbreviation_to_state_names(rows):
+    path = os.getcwd() + "/analytics/state_abbr_fullname.json"
+    with open(path) as f:
+        state_names_json = json.load(f)
+    modified_rows = []
+    for row in rows:
+        row = list(row)
+        row[0] = state_names_json[row[0]]
+        modified_rows.append(row)
+    return modified_rows
+
+
+def fetch_states_accident_counts():
+    query = "select state, count(*) from us_accident_data group by state order by count(*) desc"
+    cursor = db.execute(query)
+    rows = cursor.fetchall()
+    rows = convert_abbreviation_to_state_names(rows)
+    return rows
+
+
+def fetch_city_hot_spots():
+    path = os.getcwd() + "/analytics/abbr_state_name.json"
+    with open(path) as f:
+        state_names_json = json.load(f)
+    hotspots = {}
+    rows = fetch_states_accident_counts()
+    for row in rows:
+        state = row[0]
+        query = "select city, count(*) from us_accident_data where state=? group by city order by count(*) desc"
+        cursor = db.execute_query_with_params(query, [state_names_json[state]])
+        result = cursor.fetchmany(5)
+        row.append(result)
+        hotspots[state] = row
+    return hotspots
