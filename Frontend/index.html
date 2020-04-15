@@ -18,6 +18,7 @@
 <body>
 	<script  type="text/javascript" src="maps.js"></script>
 	<script  type="text/javascript" src="daywiseStats.js"></script>
+	<script  type="text/javascript" src="roadTopologyStats.js"></script>
 	<div id = "input-panel">
 		<b>Start: </b>
 		<input list="origin_list" id="origin" onkeyup="searchCities(true)" onfocus="removeOldData(true)" placeholder="Search for origin city.." maxlength="50" autocomplete="off" spellcheck="off">
@@ -46,7 +47,7 @@
 		  <li class="list-group-item">State-wise Accidents</li>
 		  <li class="list-group-item" onclick="findDayWiseStats()">Day-wise Accidents</li>
 		  <li class="list-group-item">Accident-prone-zones</li>
-		  <li class="list-group-item">Road Topology wise stats</li>
+		  <li class="list-group-item" onclick="findRoadTopologyWiseStats()">Road Topology wise stats</li>
 		  </ul>
 	</div>
 	<div id="map"></div>
