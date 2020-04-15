@@ -151,7 +151,7 @@ function drawLegend(color, logScale){
         .attr("x", width - 300)
         .attr("y", 30)
         .attr("font-size", "20px")
-        .text("Earthquake Frequency");
+        .text("Accidents Frequency");
 
     var legendMap = new Map();
 
