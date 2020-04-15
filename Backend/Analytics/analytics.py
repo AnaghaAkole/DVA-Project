@@ -90,3 +90,62 @@ def fetch_city_hot_spots():
         row.append(result)
         hotspots[state] = row
     return hotspots
+
+def fetch_road_topology():
+    data = []
+    query = "SELECT Bump,COUNT(Bump) FROM us_accident_data GROUP BY Bump;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Crossing,COUNT(Crossing) FROM us_accident_data GROUP BY Crossing;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Give_Way,COUNT(Give_Way) FROM us_accident_data GROUP BY Give_Way;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Junction,COUNT(Junction) FROM us_accident_data GROUP BY Junction;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT No_Exit,COUNT(No_Exit) FROM us_accident_data GROUP BY No_Exit;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Railway,COUNT(Railway) FROM us_accident_data GROUP BY Railway;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Roundabout,COUNT(Roundabout) FROM us_accident_data GROUP BY Roundabout;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Station,COUNT(Station) FROM us_accident_data GROUP BY Station;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Stop,COUNT(Stop) FROM us_accident_data GROUP BY Stop;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Traffic_Calming,COUNT(Traffic_Calming) FROM us_accident_data GROUP BY Traffic_Calming;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    query = "SELECT Traffic_Signal,COUNT(Traffic_Signal) FROM us_accident_data GROUP BY Traffic_Signal;"
+    cursor = db.execute(query)
+    res = cursor.fetchall()
+    data.append(res[1][1])
+
+    return data
