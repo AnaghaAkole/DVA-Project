@@ -46,7 +46,7 @@
 
 	<div id="list-menu">
 		  <ul class="list-group">
-		  <li class="list-group-item">Safest Route</li>
+		  <li class="list-group-item" onclick="initMap()">Safest Route</li>
 		  <li class="list-group-item">State-wise Accidents</li>
 		  <li class="list-group-item" onclick="findDayWiseStats()">Day-wise Accidents</li>
 		  <li class="list-group-item">Accident-prone-zones</li>
@@ -64,6 +64,9 @@
 	        	});
 	 		});
 	 		function initMap() {
+	 			var panel = document.getElementById("input-panel");
+    			panel.style.display = "block";
+	 			d3.select("#map").select("svg").remove();
 	 		  	var directionsService = new google.maps.DirectionsService();
 				var directionsRenderer = new google.maps.DirectionsRenderer({polylineOptions: {
       				strokeColor: "green"

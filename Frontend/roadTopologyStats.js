@@ -11,6 +11,7 @@ function findRoadTopologyWiseStats(){
 function handleStyling() {
     var panel = document.getElementById("input-panel");
     panel.style.display = "none";
+    document.getElementById("map").innerHTML = "";
 }
 
 function drawChart(data){

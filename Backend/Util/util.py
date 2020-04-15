@@ -1,7 +1,7 @@
 'This file includes helper functions that are useful for ML model'
 import requests, datetime
 from geopy.geocoders import Nominatim
-from Backend.Util.lookup_json import side_map, city_map, county_map, sunrise_sunset_map, wind_dir_map, state_map, state_abbrev_map
+from Backend.Util.lookup_json import side_map, county_map, sunrise_sunset_map, wind_dir_map, state_map, state_abbrev_map
 from joblib import Parallel, delayed
 import urllib3
 
@@ -17,7 +17,6 @@ def get_weather_info(lattitude=None, longitude=None, date=None, t=None):
     r = requests.get(
         query,
         verify=False)
-    print(r)
     data = r.json()
     filtered_data['Temperature(F)'] = data['currently']['temperature']
     filtered_data['Pressure(in)'] = data['currently']['pressure']
@@ -46,7 +45,6 @@ def get_address_info(lat, longi):
     if 'address' in location.raw:
         result['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county'].replace("County","")
         result['Side'] = 'R'
-        result['City'] = 'Aaronsburg' if 'city' not in location.raw['address'] else location.raw['address']['city']
         state_full = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
         result['State'] = state_abbrev_map[state_full]
     return result
@@ -97,16 +95,6 @@ def merge(dict1, dict2):
     dict2.update(dict1)
     return dict2
 
-
-# def lookup_val_in_json(json_file, key):
-#     if json_file == "wind_dir_map.json":
-#         key = key.upper()
-#     path = "/Users/gurleen_kaur/Documents/georgia/DVA/dva_project2/DVA-Project/Backend/Util/" + json_file
-#     with open(path) as f:
-#         loaded_json = json.load(f)
-#     return loaded_json[key]
-
-
 def predict_input_format_wrapper(attrs_dict):
     """
         This method parses attributes from dict to a list,
@@ -117,7 +105,6 @@ def predict_input_format_wrapper(attrs_dict):
     feature_lst = [attrs_dict['longitude'],
              attrs_dict['latitude'],
              side_map[attrs_dict['Side']],
-             0 if attrs_dict['City'] not in city_map else  city_map[attrs_dict['City']],
              0 if attrs_dict['County'] not in county_map else county_map[attrs_dict['County']],
              state_map[attrs_dict['State']],
              attrs_dict['Temperature(F)'],
