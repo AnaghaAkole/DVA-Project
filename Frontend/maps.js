@@ -153,12 +153,10 @@ function getSafestRoute(params, directionsRenderer, response, map) {
 			    polylineOptions: {
 			      strokeColor: "grey"
 			    }
-			  });
+			  }); 
 			// render safest route
-			directionsRenderer.setRouteIndex(min_index);
-        	directionsRenderer.setDirections(response);
-
-        	 
+			 directionsRenderer.setOptions({directions:response,routeIndex:min_index});
+			
 		}
 		else {
 			directionsRenderer.setDirections(response);
@@ -176,8 +174,7 @@ function getSafestRoute(params, directionsRenderer, response, map) {
 			      strokeColor: "grey"
 			    }
 			  });
-			directionsRenderer.setRouteIndex(0);
-        	directionsRenderer.setDirections(response);
+			directionsRenderer.setOptions({directions:response,routeIndex:0});
 
         	 
 		}
