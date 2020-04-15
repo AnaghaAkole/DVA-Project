@@ -92,7 +92,7 @@ function resolvePromises([us]) {
         .range(d3.schemeOranges[9]);
 
     var logScale = d3.scaleLog()
-        .domain([1, 2000])
+        .domain([1, 300000])
         .range([0, 9]);
 
     drawLegend(color, logScale);
