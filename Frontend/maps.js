@@ -4,7 +4,7 @@ var flag =0;
 fetch('http://127.0.0.1:8000/cities')
 	.then((response) => response.json())
 	.then((result) => {
-		cities= result
+		cities= result;
 	})
 
 function searchCities(isStart) {
@@ -43,6 +43,11 @@ function searchCities(isStart) {
 	}
 }
 
+function showSpinner(show) {
+	var spinner = document.getElementById("spinner");
+    spinner.style.display = show;
+}
+
 function removeOldData(isStart) {
 	// remove any old suggestions in the list if there
 	if(isStart) {
@@ -58,7 +63,7 @@ function removeOldData(isStart) {
 	return {filter, list}
 }
 
-function findAndDisplayRoute(directionsService, directionsRenderer) {
+function findAndDisplayRoute(directionsService, directionsRenderer, map) {
 	var origin = document.getElementById('origin').value;
 	var destination = document.getElementById('destination').value;
 	var timeOfTravel = $("#datetimepicker1").find("input").val();
@@ -75,41 +80,32 @@ function findAndDisplayRoute(directionsService, directionsRenderer) {
 		},
 		function(response, status) {
 			if (status === 'OK') {
-				var requestBody = [];
+				showSpinner("inline-block");
+				var allRoutes = [];
 				for(var i = 0; i < response["routes"].length; i++) {
 					var route = response["routes"][i];
 					var overview_path = route["overview_path"];
-					var route_legs = route["legs"];
-					var duration =0;
 					var singleRoute = [];
 					// set routes list
-					for(var j =0; j < overview_path.length; j++){
+					var limit =  overview_path.length > 50 ? Math.ceil(overview_path.length/ 50) : 1;
+					for(var j = 0; j < overview_path.length; j+= limit) {
 						var lat = overview_path[j].lat();
 						var lng = overview_path[j].lng();
-						singleRoute[j] = {
+						singleRoute.push({
 							"latitude": lat,
 							"longitude": lng
-						}
+						}) ;
 					}
-					// set duration
-					for(var j =0; j < route_legs.length; j++) {
-						duration = duration + route_legs[j]["duration"].value;
-					}
-					// set request body 
-					requestBody[i] = {
-						"route": singleRoute,
-						"duration": duration
-					}
+					allRoutes.push(singleRoute) 
 
 				}
+				// set request body 
 				finalRequestBody = {
 					"timeOfTravel":timeOfTravel,
-					"routes": requestBody
+					"routes": allRoutes
 				}
-				console.log(finalRequestBody);
-				//getSafestRoute(finalRequestBody);
-              	// modify the response here to remove unsafe routes from routes[] array to render only safest route on the UI
-              	directionsRenderer.setDirections(response);
+				getSafestRoute(finalRequestBody, directionsRenderer, response, map);
+              	
               } else {
               	window.alert('Directions request failed due to ' + status);
               }
@@ -118,7 +114,8 @@ function findAndDisplayRoute(directionsService, directionsRenderer) {
 
 }
 // call the api to get safest path
-function getSafestRoute(params) {
+function getSafestRoute(params, directionsRenderer, response, map) {
+	showSpinner("inline-block");
 	let fetchData = { 
 	    method: 'POST', 
 	    body: JSON.stringify(params),
@@ -127,8 +124,66 @@ function getSafestRoute(params) {
 	    })
 	}
 	fetch('http://127.0.0.1:8000/maps/safepath', fetchData)
-	.then((resp) => resp.json())
-	.then((d) => {
-		console.log(d);
+	.then(function(resp) {
+		return resp.json()
 	})
+	.then(function(result) {
+		showSpinner("none");
+		var severities = result['severity_scores'];
+		var min_severity = 100;
+		var min_index =0;
+		var max_severity = 0;
+		var max_index = 0;
+		for (var i =0; i < severities.length; i++) {
+			if (severities[i] < min_severity) {
+				min_severity = severities[i];
+				min_index = i;
+			}
+			if (severities[i] > max_severity) {
+				max_severity = severities[i];
+				max_index = i;
+			}
+		}
+		if (max_index != min_index) {
+			// render unsafest route
+			var directionsRenderer2 = new google.maps.DirectionsRenderer({
+			    directions: response,
+			    routeIndex: max_index,
+			    map: map,
+			    polylineOptions: {
+			      strokeColor: "grey"
+			    }
+			  }); 
+			// render safest route
+			 directionsRenderer.setOptions({directions:response,routeIndex:min_index});
+			
+		}
+		else {
+			directionsRenderer.setDirections(response);
+		}
+		
+	})
+	.catch(err =>{
+		showSpinner("none");
+		if (response['routes'].length > 1) {
+			var directionsRenderer2 = new google.maps.DirectionsRenderer({
+			    directions: response,
+			    routeIndex: 1,
+			    map: map,
+			    polylineOptions: {
+			      strokeColor: "grey"
+			    }
+			  });
+			directionsRenderer.setOptions({directions:response,routeIndex:0});
+
+        	 
+		}
+		else {
+			directionsRenderer.setDirections(response);
+		}
+    });
 }
+
+
+
+

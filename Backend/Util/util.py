@@ -1,13 +1,14 @@
 'This file includes helper functions that are useful for ML model'
-import requests, json, datetime
+import requests, datetime
 from geopy.geocoders import Nominatim
-import json
-import time
+from Backend.Util.lookup_json import side_map, county_map, sunrise_sunset_map, wind_dir_map, state_map, state_abbrev_map
+from joblib import Parallel, delayed
+import urllib3
 
-
-def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
+def get_weather_info(lattitude=None, longitude=None, date=None, t=None):
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     '''expected date syntax: yyyy-mm-dd, time syntax: HH:MM:SS'''
-    final_time = str(date) + "T" + str(time)
+    final_time = str(date) + "T" + str(t)
     lat = str(lattitude)
     longi = str(longitude)
 
@@ -20,7 +21,7 @@ def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
     filtered_data['Temperature(F)'] = data['currently']['temperature']
     filtered_data['Pressure(in)'] = data['currently']['pressure']
     filtered_data['Humidity(%)'] = data['currently']['humidity']
-    filtered_data['Wind_Direction'] = data['currently']['windBearing']
+    filtered_data['Wind_Direction'] = wind_deg_to_str2(data['currently']['windBearing'])
     filtered_data['Wind_Speed(mph)'] = data['currently']['windSpeed']
     filtered_data['Visibility(mi)'] = data['currently']['visibility']
     date = datetime.datetime.fromtimestamp(data['currently']['time']).strftime('%H:%M:%S')
@@ -29,38 +30,29 @@ def get_weather_info(lattitude=None, longitude=None, date=None, time=None):
         filtered_data['Sunrise_Sunset'] = 'Night'
     else:
         filtered_data['Sunrise_Sunset'] = 'Day'
-    print(filtered_data)
     return filtered_data
 
 
+def wind_deg_to_str2(deg):
+    arr = ['NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N']
+    return arr[int(abs((deg - 11.25) % 360) / 22.5)]
 
-def get_address_info(data):
+
+def get_address_info(lat, longi):
     geolocator = Nominatim(user_agent='DVA-project')
-    route_obj = data[0]['route']
-    for obj in data:
-        route = obj['route']
-        duration = obj['duration']
-        obj['start_time'] = time.time()
-        obj['end_time'] = obj['start_time'] + duration
-        for r in route:
-            location = geolocator.reverse(', '.join([str(r['latitude']), str(r['longitude'])]), timeout=600000)
-            if 'address' in location.raw:
-                r['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county']
-                r['postcode'] = '' if 'postcode' not in location.raw['address'] else location.raw['address']['postcode']
-                r['Side'] = 'R'
-                r['City'] = '' if 'city' not in location.raw['address'] else location.raw['address']['city']
-                r['State'] = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
-    result = {
-        'start_lat': route_obj[0]['latitude'],
-        'start_long': route_obj[0]['longitude'],
-        'data': data
-    }
+    location = geolocator.reverse(', '.join([str(lat), str(longi)]), timeout=100)
+    result = {}
+    if 'address' in location.raw:
+        result['County'] = '' if 'county' not in location.raw['address'] else location.raw['address']['county'].replace("County","")
+        result['Side'] = 'R'
+        state_full = '' if 'state' not in location.raw['address'] else location.raw['address']['state']
+        result['State'] = state_abbrev_map[state_full]
     return result
 
 
 def form_query(feature, bbox):
     overpass_query = """
-    [out:json][timeout:50000];
+    [out:json][timeout:1];
     node
     """ + feature + bbox + """; 
     out body;
@@ -69,61 +61,39 @@ def form_query(feature, bbox):
 
 
 def get_topology_info(latitude, longitude):
-
-    """
-
-    :param latitude:
-    :param longitude:
-    :return:dict: {"traffic_calming":True ......}
-    """
-    # use bbox coordinates in query . Currently giving dummy coordinates
     # bbox = "(50.6,7.0,50.8,7.3)"
-    bbox = "("+str(latitude-0.5)+","+str(longitude-0.5)+","+str(latitude+0.5)+","+str(longitude+0.5)+")"
-    result = {}
-    overpass_query = form_query("""["traffic_calming"="yes"]""", bbox)
-    result['traffic_calming'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["highway"="crossing"]""", bbox)
-    result['Crossing'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["highway"="give_way"]""", bbox)
-    result['Give_Way'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["public_transport"="station"]""", bbox)
-    result['station'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["railway"="level_crossing"]""", bbox)
-    result['Railway'] = is_present(overpass_query)
-
-    overpass_query = form_query("""["crossing"="traffic_signals"]""", bbox)
-    result['Traffic_Signal'] = is_present(overpass_query)
-
-    print(result)
-    return result
+    bbox = "("+str(latitude-0.2)+","+str(longitude-0.2)+","+str(latitude+0.2)+","+str(longitude+0.2)+")"
+    features = ['Traffic_Calming', 'Crossing', 'Give_Way', 'Station', 'Railway', 'Traffic_Signal']
+    overpass_queries = [form_query("""["traffic_calming"="yes"]""", bbox),
+                        form_query("""["highway"="crossing"]""", bbox),
+                        form_query("""["highway"="give_way"]""", bbox),
+                        form_query("""["public_transport"="station"]""", bbox),
+                        form_query("""["railway"="level_crossing"]""", bbox),
+                        form_query("""["crossing"="traffic_signals"]""", bbox) ]
+    result = Parallel(n_jobs=6)(delayed(is_present)(overpass_queries, features, i) for i in range(6))
+    final_result = {}
+    for i in result:
+        final_result.update(i)
+    return final_result
 
 
-def is_present(overpass_query):
+def is_present(overpass_queries, features, i):
     overpass_url = "http://overpass-api.de/api/interpreter"
-    response = requests.get(overpass_url,
-                            params={'data': overpass_query})
-    data = response.json()
+    try:
+        response = requests.get(overpass_url,
+                                params={'data': overpass_queries[i]}, timeout=1)
+        data = response.json()
+    except:
+        return { features[i]: False }
     if data and 'elements' in data and len(data['elements']) > 0:
-        return True
+        return { features[i]: True }
     else:
-        return False
+        return { features[i]: False}
 
 
 def merge(dict1, dict2):
-    return dict2.update(dict1)
-
-
-def lookup_val_in_json(json_file, key):
-    if json_file == "wind_dir_map.json":
-        key = key.upper()
-    path = "/Users/piyush/Documents/DVA/DVA-Project/Backend/Util/" + json_file
-    with open(path) as f:
-        loaded_json = json.load(f)
-    return loaded_json[key]
+    dict2.update(dict1)
+    return dict2
 
 def predict_input_format_wrapper(attrs_dict):
     """
@@ -132,19 +102,18 @@ def predict_input_format_wrapper(attrs_dict):
         Argument  : dict of input attributes with same naming as in the dataset
         Return    : list of attributes to be passed to model.predict method
     """
-    feature_lst=[attrs_dict['longitude'],
+    feature_lst = [attrs_dict['longitude'],
              attrs_dict['latitude'],
-             lookup_val_in_json('side_map.json', attrs_dict['Side']),
-             lookup_val_in_json('city_map.json', attrs_dict['City']),
-             lookup_val_in_json('county_map.json', attrs_dict['County']),
-             lookup_val_in_json('state_map.json', attrs_dict['State']),
+             side_map[attrs_dict['Side']],
+             0 if attrs_dict['County'] not in county_map else county_map[attrs_dict['County']],
+             state_map[attrs_dict['State']],
              attrs_dict['Temperature(F)'],
              attrs_dict['Humidity(%)'],
-             attrs_dict['Pressure(in)'], 
-             lookup_val_in_json('wind_dir_map.json', attrs_dict['Wind_Direction']),
+             attrs_dict['Pressure(in)'],
+             wind_dir_map[attrs_dict['Wind_Direction'].upper()],
              attrs_dict['Wind_Speed(mph)'],
-             attrs_dict['Visibility(mi)'], 
-             lookup_val_in_json('sunrise_sunset_map.json', attrs_dict['Sunrise_Sunset']),
+             attrs_dict['Visibility(mi)'],
+             sunrise_sunset_map[attrs_dict['Sunrise_Sunset']],
              attrs_dict['Crossing'],
              attrs_dict['Give_Way'],
              attrs_dict['Railway'],
@@ -153,5 +122,5 @@ def predict_input_format_wrapper(attrs_dict):
              attrs_dict['Traffic_Signal'],
              attrs_dict['Weekday'],
              attrs_dict['Month'],
-             attrs_dict['Year']] 
+             attrs_dict['Year']]
     return feature_lst

@@ -4,6 +4,7 @@ function findRoadTopologyWiseStats(){
     fetch('http://127.0.0.1:8000/roadTopology')
     .then((response) => response.json())
     .then((result) => {
+      showSpinner("none")
         drawChart(result)
     })
 }
@@ -11,6 +12,13 @@ function findRoadTopologyWiseStats(){
 function handleStyling() {
     var panel = document.getElementById("input-panel");
     panel.style.display = "none";
+    document.getElementById("map").innerHTML = "";
+    showSpinner("inline-block")
+}
+
+function showSpinner(show) {
+    var spinner = document.getElementById("spinner");
+    spinner.style.display = show;
 }
 
 function drawChart(data){

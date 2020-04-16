@@ -7,9 +7,54 @@
   height: 100%;
   width: 75%;
   float: right;
-  background-image: url('us_accidents_description.png');
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  
+}
+.states {
+  fill: none;
+  stroke: #000;
+  stroke-linejoin: round;
+}
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  left: 80px;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+table, th, td 
+{
+  border: solid 1px #000012;
+  border-collapse: collapse;
+  padding: 2px 3px;
+  text-align: center;
+  font-size: 12px;
+}
+
+#map div {
+  margin-right: 40px;
+  margin-top: 30px;
+  float: right;
 }
 #list-menu {
  width: 25%;
@@ -102,4 +147,11 @@
   font-weight: bold;
   color: white;
   content: "\25BC";
+}
+#spinner {
+  margin-left: 25%;
+  margin-top: 25%;
+  display: none;
+  position: absolute;
+  z-index: 5;
 }

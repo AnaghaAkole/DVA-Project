@@ -57,7 +57,7 @@ def generate_word_cloud():
     return text
 
 def convert_abbreviation_to_state_names(rows):
-    path = os.getcwd() + "/analytics/state_abbr_fullname.json"
+    path = os.getcwd() + "/Backend/Analytics/state_abbr_fullname.json"
     with open(path) as f:
         state_names_json = json.load(f)
     modified_rows = []
@@ -77,7 +77,7 @@ def fetch_states_accident_counts():
 
 
 def fetch_city_hot_spots():
-    path = os.getcwd() + "/analytics/abbr_state_name.json"
+    path = os.getcwd() + "/Backend/Analytics/abbr_state_name.json"
     with open(path) as f:
         state_names_json = json.load(f)
     hotspots = {}

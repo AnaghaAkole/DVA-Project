@@ -4,8 +4,6 @@ from Backend.ML.model import Inference
 from Backend.Analytics.analytics import fetch_city_hot_spots, fetch_cities, fetch_day_wise_count, fetch_Description, fetch_road_topology
 from fastapi.middleware.cors import CORSMiddleware
 
-import json
-
 app = FastAPI()
 inference_obj = Inference()
 
@@ -37,11 +35,9 @@ def show_map():
 
 @app.post("/maps/safepath")
 async def get_safest_route(request: Request):
-    params = await request.body()
-    data = json.loads(params.decode(encoding='UTF-8'))
-    routes = inference_obj.find_safest_path(data)
-    print (routes)
-
+    params = await request.json()
+    routes = inference_obj.find_safest_path(params)
+    return routes
 
 
 @app.get("/cities")

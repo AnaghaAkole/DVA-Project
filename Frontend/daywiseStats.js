@@ -3,7 +3,7 @@
   var data = []
   width = 600;
   function findDayWiseStats() {
-    handleStyling();
+    handleStylingForDayWiseStats();
     fetch('http://127.0.0.1:8000/daywiseCount')
     .then((response) => response.json())
     .then((result) => {
@@ -18,9 +18,10 @@
     })
   }
 
-  function handleStyling() {
+  function handleStylingForDayWiseStats() {
     var panel = document.getElementById("input-panel");
     panel.style.display = "none";
+    document.getElementById("map").innerHTML = "";
   }
 
   function getDay(number) {
@@ -96,7 +97,7 @@
     	    })
     	    .attr("width", 60)
     	    .attr("height", function(d) {
-    	        return height - (yScale(d.count))-800;
+    	        return 1200 - (yScale(d.count))-800;
     	    })
     	    .style("fill", function(d) {
             if (d.count > 80000) {
