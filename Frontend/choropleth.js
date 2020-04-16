@@ -92,7 +92,7 @@ function resolvePromises([us]) {
         .range(d3.schemeOranges[9]);
 
     var logScale = d3.scaleLog()
-        .domain([1, 2000])
+        .domain([1, 300000])
         .range([0, 9]);
 
     drawLegend(color, logScale);
@@ -151,7 +151,7 @@ function drawLegend(color, logScale){
         .attr("x", width - 300)
         .attr("y", 30)
         .attr("font-size", "20px")
-        .text("Earthquake Frequency");
+        .text("Accidents Frequency");
 
     var legendMap = new Map();
 
