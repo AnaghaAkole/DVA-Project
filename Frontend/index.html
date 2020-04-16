@@ -6,6 +6,10 @@
 	<title>Just to be on the safe side</title>
 	<script type="text/javascript" src="lib/d3/d3.min.js"></script>
 	<script type="text/javascript" src="lib/d3/d3-tip.min.js"></script>
+	<script type="text/javascript" src="./lib/d3/topojson.v2.min.js"></script>
+	<script type="text/javascript" src="./lib/d3-dsv/d3-dsv.min.js"></script>
+	<script type="text/javascript" src="./lib/d3-fetch/d3-fetch.min.js"></script>
+    <script type="text/javascript" src="./lib/d3/d3-scale-chromatic.v1.min.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/momentjs/2.14.1/moment.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -13,15 +17,17 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-	
-  	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script type="text/javascript" src="data.js"></script>
 	<link rel="stylesheet" type="text/css" href="style.css">
+    <script type="text/javascript" src="state-mapping.js"></script>
 
 </head>
 <body>
 	<script  type="text/javascript" src="maps.js"></script>
 	<script  type="text/javascript" src="daywiseStats.js"></script>
 	<script  type="text/javascript" src="roadTopologyStats.js"></script>
+	<script  type="text/javascript" src="choropleth.js"></script>
 	<div id = "input-panel">
 		<b>Start: </b>
 		<input list="origin_list" id="origin" onkeyup="searchCities(true)" onfocus="removeOldData(true)" placeholder="Search for origin city.." maxlength="50" autocomplete="off" spellcheck="off">
@@ -40,21 +46,21 @@
             </span>
         </div>
 
-		<div id = "submit-div"><input type="submit" value="Find" id = "button" onclick="initMap()"></div>
+		<div id = "submit-div"><input type="submit" value="Find" id = "button" onclick="initMap(true)"></div>
 		<div id = 'errorDiv'>City not found in the database</div>
 	</div>
 
 	<div id="list-menu">
 		  <ul class="list-group">
-		  <li class="list-group-item" onclick="initMap()">Safest Route</li>
-		  <li class="list-group-item">State-wise Accidents</li>
+		  <li class="list-group-item" onclick="initMap(false)">Safest Route</li>
+		  <li class="list-group-item" onclick="getStateAccidentCount()">State-wise Accidents</li>
 		  <li class="list-group-item" onclick="findDayWiseStats()">Day-wise Accidents</li>
-		  <li class="list-group-item">Accident-prone-zones</li>
 		  <li class="list-group-item" onclick="findRoadTopologyWiseStats()">Road Topology wise stats</li>
 		  </ul>
 	</div>
 	<div class="spinner-border text-muted" id="spinner"></div>
-	<div id="map"></div>
+	<div id="map">
+	</div>
 
 	<script>
 			$(function () {
@@ -63,7 +69,7 @@
 	            		format: 'YYYY-MM-DD HH:mm:ss'
 	        	});
 	 		});
-	 		function initMap() {
+	 		function initMap(showRoute) {
 	 			var panel = document.getElementById("input-panel");
     			panel.style.display = "block";
 	 			d3.select("#map").select("svg").remove();
@@ -76,12 +82,14 @@
 					center: {lat: 41.85, lng: -87.65}
 				});
 				directionsRenderer.setMap(map);
-				findAndDisplayRoute(directionsService, directionsRenderer, map);    
+				if (showRoute) {
+					findAndDisplayRoute(directionsService, directionsRenderer, map);
+				}
 	 		}
 			
 		
 	</script>
-<!--<script async defer
+	<!--<script async defer
     src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap">
 	</script>-->
 </body>

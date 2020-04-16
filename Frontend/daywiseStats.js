@@ -97,7 +97,7 @@
     	    })
     	    .attr("width", 60)
     	    .attr("height", function(d) {
-    	        return height - (yScale(d.count))-800;
+    	        return 1200 - (yScale(d.count))-800;
     	    })
     	    .style("fill", function(d) {
             if (d.count > 80000) {

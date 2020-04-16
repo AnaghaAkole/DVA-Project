@@ -1,65 +1,15 @@
-var loadData = true;
 var jsonData;
-var seletedYear;
 var legendG = null;
 var csvData = [];
 
-var svg = d3.select("svg");
-var width = svg.attr("width");
-var height = svg.attr("height");
+
+var width = 600;
+var height = 800;
 
 var accidents = d3.map();
 
 var path = d3.geoPath();
-
-var g = svg.append("g")
-    .attr("class", "key")
-    .attr("transform", "translate(0,100)");
-
-// var dataTime = d3.range(0, 6).map(function (d) {
-//     return new Date(2010 + d, 10, 1);
-// });
-//
-// defaultDate = new Date(2010, 10, 1);
-// var sliderTime = d3
-//     .sliderBottom()
-//     .min(d3.min(dataTime))
-//     .max(d3.max(dataTime))
-//     .step(1000 * 60 * 60 * 24 * 365)
-//     .width(300)
-//     .tickFormat(d3.timeFormat('%Y'))
-//     .tickValues(dataTime)
-//     .ticks(5)
-//     .default(defaultDate)
-//     .on('onchange', function (d) {
-//         if (loadData) {
-//             drawChoropleth(d3.timeFormat('%Y')(d));
-//         } else {
-//             drawChoroplethWithoutFetchingData(d3.timeFormat('%Y')(d));
-//         }
-//     });
-//
-//
-// var gTime = d3
-//     .select('div#slider-time')
-//     .append('svg')
-//     .attr('width', 600)
-//     .attr('height', 150)
-//     .append('g')
-//     .attr('transform', 'translate(30,30)');
-//
-// gTime.call(sliderTime);
-
-//drawChoropleth("2010");
-
-function drawChoroplethWithoutFetchingData(year) {
-    seletedYear = year;
-    accidents = d3.map();
-    csvData.forEach(function (d) {
-        accidents.set(d.States, [d.Region, +d[year], year])
-    });
-    resolvePromises([jsonData]);
-}
+var svg;
 
 function drawChoropleth(data) {
     data = data['results'];
@@ -73,20 +23,39 @@ function drawChoropleth(data) {
 }
 
 function getStateAccidentCount() {
-    let fetchData = {
-        method: 'GET'
-    };
     var states = null;
-    fetch('http://127.0.0.1:8000/maps/hotspots', fetchData).then((response) => response.json()).then((result) => {
+    handleStylingInStatesStats();
+    fetch('http://127.0.0.1:8000/maps/hotspots').then((response) => response.json()).then((result) => {
         states = result;
+        showSpinner("none")
         drawChoropleth(states);
     });
 }
+function handleStylingInStatesStats() {
+    var panel = document.getElementById("input-panel");
+    panel.style.display = "none";
+    document.getElementById("map").innerHTML = "";
+    showSpinner("inline-block")
+}
+
+function showSpinner(show) {
+    var spinner = document.getElementById("spinner");
+    spinner.style.display = show;
+}
 
 function resolvePromises([us]) {
+    svg = d3.select("#map")
+        .append("svg")
+        .attr("class","svg")
+        .attr("width", "600px")
+        .attr("height", "800px")
+        .style("background-color","white")
+        .style("float","left")
     jsonData = us;
-    loadData = false;
 
+    var g = svg.append("g")
+        .attr("class", "key")
+        .attr("transform", "translate(0,100)");
     var color = d3.scaleThreshold()
         .domain(d3.range(0, 9))
         .range(d3.schemeOranges[9]);
@@ -99,7 +68,7 @@ function resolvePromises([us]) {
 
     var projection = d3.geoAlbersUsa()
         .translate([width / 2, height / 2 + 100])
-        .scale(1200);
+        .scale(600);
 
     var tip = addTip(svg);
 
@@ -118,7 +87,10 @@ function resolvePromises([us]) {
         })
         .attr("d", d3.geoPath(projection))
         .on('mouseout', tip.hide)
-        .on('mouseover', tip.show);
+        .on('mouseover', tip.show)
+        .on('click', function(d){
+            CreateTableFromJSON(state_mapping[d.properties.name]);
+        })
 }
 
 function addTip(svg) {
@@ -196,4 +168,52 @@ function drawLegend(color, logScale){
       .text(function(d){ return d.name; });
 }
 
-getStateAccidentCount();
+
+
+function CreateTableFromJSON(state_name) {
+        var statewiseMonthlyStats = data_states;
+        var col = [];
+        for (var i = 0; i < statewiseMonthlyStats.length; i++) {
+            for (var key in statewiseMonthlyStats[i]) {
+                if (col.indexOf(key) === -1) {
+                    col.push(key);
+                }
+            }
+        }
+        var table = document.createElement("table");
+        var tr = table.insertRow(-1);
+        tr.style.backgroundColor = "rgba(255,12,32,.5)";   
+
+        for (var i = 0; i < col.length; i++) {
+            var th = document.createElement("th");    
+            th.innerHTML = col[i];
+            tr.appendChild(th);
+        }
+
+        for (var i = 0; i < statewiseMonthlyStats.length; i++) {
+            if (statewiseMonthlyStats[i][col[0]] == state_name && statewiseMonthlyStats[i][col[2]] != 0){
+                tr = table.insertRow(-1);
+                tr.style.backgroundColor = "rgba(0,135,147,.3)";
+            }    
+            
+            for (var j = 0; j < col.length; j++) {
+                if (statewiseMonthlyStats[i][col[0]] == state_name && statewiseMonthlyStats[i][col[2]] != 0) {
+                    var tabCell = tr.insertCell(-1);
+                    tabCell.innerHTML = statewiseMonthlyStats[i][col[j]];
+                }
+            }
+        }
+        if (document.getElementById("show_data") == null) {
+            var divContainer = document.createElement("div");
+            divContainer.id = "show_data";
+            divContainer.innerHTML = "";
+            divContainer.appendChild(table);
+            document.getElementById("map").appendChild(divContainer);
+        }
+        else {
+             var divContainer = document.getElementById("show_data");
+             divContainer.innerHTML = "";
+             divContainer.appendChild(table);
+        }
+       
+    }
